@@ -1,7 +1,7 @@
 """
 Description: Networks source code for Learning pybrain on postcode digits dataset
 Author: Iva
-Date: 16. 10. 2015
+Date: Oct 2015
 Python version: 2.7.10 (venv2)
 """
 
@@ -10,21 +10,21 @@ bellow defined nerworks for MNIST 28x28:
     net_full
     net_shared
     net shared2
-    net_shared2_bias
 """
 
 from pybrain.tools.shortcuts import buildNetwork
 from pybrain.structure.networks import FeedForwardNetwork
-from pybrain.structure.modules import LinearLayer, SigmoidLayer, SoftmaxLayer
+from pybrain.structure.modules import LinearLayer, SigmoidLayer, SoftmaxLayer, BiasUnit
 from pybrain.structure.moduleslice import ModuleSlice
 from pybrain.structure.connections.shared import MotherConnection,SharedFullConnection, FullConnection
+from shared_mesh import shared_mesh
 
 ################################################
-def net_full():
-    return buildNetwork(28*28, 12, 10, outclass=SoftmaxLayer)
+def net_full(bias=True):
+    return buildNetwork(28*28, 12, 10, outclass=SoftmaxLayer, bias=bias)
 
 ################################################
-def net_shared(h1dim=8):
+def net_shared(h1dim=8, bias=True):
     net = FeedForwardNetwork()
     # make modules
     inp=LinearLayer(28*28,name='input')
@@ -33,15 +33,17 @@ def net_shared(h1dim=8):
     net.addInputModule(inp)
     net.addModule(h1)
     net.addOutputModule(outp)
+    if bias:
+        net.addModule(BiasUnit(name='bias'))
+        net.addConnection(FullConnection(net['bias'],outp))
     # make connections
-    from shared_mesh import shared_mesh
-    net = shared_mesh(net, inlayer=inp, outlayer=h1, k=5)
+    net = shared_mesh(net, inlayer=inp, outlayer=h1, k=5, bias=bias)
     net.addConnection(FullConnection(h1, outp))
     net.sortModules()
     return net
 
 ################################################
-def net_shared2(h1dim=13,h2dim=5):
+def net_shared2(h1dim=13,h2dim=5, bias=True):  #  alternative default: h1dim=8, h2dim=4,
     net = FeedForwardNetwork()
     # make modules
     inp=LinearLayer(28*28,name='input')
@@ -52,12 +54,12 @@ def net_shared2(h1dim=13,h2dim=5):
     net.addModule(h1)
     net.addModule(h2)
     net.addOutputModule(outp)
+    if bias:
+        net.addModule(BiasUnit(name='bias'))
+        net.addConnection(FullConnection(net['bias'],outp))
     # make connections
-    from shared_mesh import shared_mesh
-    net = shared_mesh(net, inlayer=inp, outlayer=h1, k=5, mc_name='mother1st')
-    net = shared_mesh(net, inlayer=h1, outlayer=h2, k=5, mc_name='mother2nd')
+    net = shared_mesh(net, inlayer=inp, outlayer=h1, k=5, mc_name='mother1st', bias=bias)
+    net = shared_mesh(net, inlayer=h1, outlayer=h2, k=5, mc_name='mother2nd', bias=bias)
     net.addConnection(FullConnection(h2, outp))
     net.sortModules()
     return net
-
-n.addModule(BiasUnit(name='bias'))
