@@ -63,3 +63,31 @@ def net_shared2(h1dim=13,h2dim=5, bias=True):  #  alternative default: h1dim=8, 
     net.addConnection(FullConnection(h2, outp))
     net.sortModules()
     return net
+
+################################################
+def net_shared_multi(h1dim=8, h2dim=4, h1multi=2, h2multi=4, k1=5, k2=10, bias=True):
+    net = FeedForwardNetwork()
+    # make modules
+    inp=LinearLayer(28*28,name='input')
+    h1=[SigmoidLayer(h1dim**2,name='hidden1st'+str(i)) for i in range(h1multi)]
+    h2=[SigmoidLayer(h2dim**2,name='hidden2nd'+str(j)) for j in range(h2multi)]
+    outp=SoftmaxLayer(10,name='output')
+    net.addInputModule(inp)
+    for i in range(h1multi):
+        net.addModule(h1[i])
+    for j in range(h2multi):
+        net.addModule(h2[j])
+    net.addOutputModule(outp)
+    if bias:
+        net.addModule(BiasUnit(name='bias'))
+        net.addConnection(FullConnection(net['bias'],outp))
+    # make connections
+    for i in range(h1multi):
+        net = shared_mesh(net, inlayer=inp, outlayer=h1[i], k=k1, mc_name='mother1st'+str(i), bias=bias)
+        for j in range(h2multi):
+            net = shared_mesh(net, inlayer=h1[i], outlayer=h2[j], k=k2, mc_name='mother2nd'+str(i)+'-'+str(j), bias=bias)
+    for j in range(h2multi):
+        net.addConnection(FullConnection(h2[j], outp))
+    net.sortModules()
+    return net
+

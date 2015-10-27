@@ -67,12 +67,12 @@ def big_training(np_data, num_nets=1, num_epoch=20, net_builder=net_full):
         print ('%s Building %d. network.' %(time.ctime(), net_ind+1))
         #print("TRAIN:", len(train_index), "TEST:", len(test_index))
         trainset = ClassificationDataSet(np_data.shape[1] - 1, 1)
-        trainset.setField('input', np_data[train_index,1:])
+        trainset.setField('input', np_data[train_index,1:]/100-.6)
         trainset.setField('target', np_data[train_index,:1])
         trainset._convertToOneOfMany( )
         trainlabels = trainset['class'].ravel().tolist()
         testset = ClassificationDataSet(np_data.shape[1] - 1, 1)
-        testset.setField('input', np_data[test_index,1:])
+        testset.setField('input', np_data[test_index,1:]/100-.6)
         testset.setField('target', np_data[test_index,:1])
         testset._convertToOneOfMany( )
         testlabels = testset['class'].ravel().tolist()
@@ -85,9 +85,37 @@ def big_training(np_data, num_nets=1, num_epoch=20, net_builder=net_full):
             print ('%s Epoch %d: Train accuracy is %f' %(time.ctime(), i+1, trainaccu[net_ind][i]))
             testaccu[net_ind][i]=accuracy_score(testlabels,trainer.testOnClassData(testset))
             print ('%s Epoch %d: Test accuracy is %f' %(time.ctime(), i+1, testaccu[net_ind][i]))
-        NetworkWriter.writeToFile(nets[net_ind], 'nets/net_shared'+str(net_ind)+'.xml')
+        NetworkWriter.writeToFile(nets[net_ind], 'nets/'+net_builder.__name__+str(net_ind)+'.xml')
         net_ind +=1
     return [nets, trainaccu, testaccu]
 
-result2 = big_training(np_train[1:5000,:], num_nets=2, num_epoch=3, net_builder=net_full)
+result_full = big_training(np_train[1:5000,:], num_nets=3, num_epoch=7, net_builder=net_full)
 
+result_shared2 = big_training(np_train[20000:40000,:], num_nets=5, num_epoch=7, net_builder=net_shared2)
+
+result_shared = big_training(np_train[1:20000,:], num_nets=3, num_epoch=20, net_builder=net_shared)
+result_shared3 = big_training(np_train[20000:40000,:], num_nets=5, num_epoch=20, net_builder=net_shared3)
+result_shared_multi = big_training(np_train[20000:40000,:], num_nets=5, num_epoch=20, net_builder=net_shared_multi)
+
+testset = ClassificationDataSet(np_train.shape[1] - 1, 1)
+testset.setField('input', np_train[20000:30000,1:])
+testset.setField('target', np_train[20000:30000,:1])
+testset._convertToOneOfMany( )
+testlabels = testset['class'].ravel().tolist()
+
+out=[0,0,0]
+for i in range(3):
+    net = NetworkReader.readFrom('nets/net_shared'+str(i)+'.xml')
+    trainer = BackpropTrainer(net)
+    out[i] = trainer.testOnClassData(testset)
+
+out[3]=testlabels
+for i in range(4):
+    for j in range(i+1,4):
+        print ('Accuracy between %d and %d is %f.' %(i, j, accuracy_score(out[i],out[j]) ))
+
+from scipy.stats import mode
+m=np.zeros((len(testlabels),2))
+for i in range(len(testlabels)):
+    x=mode([out[0][i], out[1][i], out[2][i]])
+    m[i,:]=x.mode.tolist()+x.count.tolist()
