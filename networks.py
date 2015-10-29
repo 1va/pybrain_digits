@@ -20,8 +20,8 @@ from pybrain.structure.connections.shared import MotherConnection,SharedFullConn
 from shared_mesh import shared_mesh
 
 ################################################
-def net_full(bias=True):
-    return buildNetwork(28*28, 12, 10, outclass=SoftmaxLayer, bias=bias)
+def net_full(k=24, bias=True):
+    return buildNetwork(28*28, k, 10, outclass=SoftmaxLayer, bias=bias)
 
 ################################################
 def net_shared(h1dim=8, bias=True):
