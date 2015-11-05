@@ -5,17 +5,18 @@ Date: Oct 2015
 Python version: 2.7.10 (venv2)
 """
 
-import numpy as np
 import time
-from sklearn.metrics import confusion_matrix, accuracy_score, roc_curve, auc
+
+import numpy as np
+from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn import cross_validation              #train_test_split, cross_validation.StratifiedKFold, StratifiedShuffleSplit
 
 from pybrain.datasets import ClassificationDataSet
 from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.utilities import percentError
-
-from networks import *
+from pybrain_nnet.networks import *
 from pybrain.tools.xml.networkwriter import NetworkWriter
+
 
 ################################################
 from pybrain.tools.xml.networkreader import NetworkReader
