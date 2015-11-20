@@ -13,21 +13,21 @@ import numpy as np
 import lasagne   #lightweigh nnet in theano
 import theano
 import theano.tensor as T
-#from sklearn import cross_validation
+from sklearn import cross_validation
 
 
 def load_dataset():
     # open csv file (from kaggle)
 
+    n_size=4200 #42000
     np_train = np.genfromtxt('data/train.csv', delimiter=',', skip_header= True, dtype='uint8')
     np_test = np.genfromtxt('data/test.csv', delimiter=',', skip_header= True, dtype='uint8')
-    X = np_train[:,1:].reshape(42000,1,28,28)/np.float32(128)
-    y = np_train[:,0]
+    X = np_train[:n_size,1:].reshape(n_size,1,28,28)/np.float32(128)
+    y = np_train[:n_size,0]
     X_test = np_test.reshape(28000,1,28,28)/np.float32(128)
-    y_test = np_train[:28000,0] # nonsense just to fit the shape
+    y_test = np.zeros([28000,0]) # nonsense just to fit the shape
 
-    sss = [(range(0,38000), range(38000,42000))]
-        #cross_validation.StratifiedShuffleSplit(np_train[:,:1].ravel(), n_iter=1, test_size=.1, random_state=3476)
+    sss = cross_validation.StratifiedShuffleSplit(y, n_iter=1, test_size=.2, random_state=3476)
     for train_index, test_index in sss:
         X_train = X[train_index]
         y_train = y[train_index]
@@ -81,5 +81,20 @@ def build_cnn(input_var=None):
 
 
 
-build_net = build_cnn
+def pickle_net(net):
+    import cPickle as pickle
+    import sys
+    sys.setrecursionlimit(10000)
+    with open('net.pickle', 'wb') as f:
+        pickle.dump(net, f, -1)
 
+def unpickle_net(input_var=None):
+    import cPickle as pickle
+    import sys
+    sys.setrecursionlimit(10000)
+    with open('net.pickle', 'rb') as f:  # !
+        net = pickle.load(f)  # !
+    net.input_layer.input_layer.input_layer.input_layer.input_layer.input_layer.input_layer.input_layer.input_var = input_var
+    return net
+
+build_net = build_cnn
